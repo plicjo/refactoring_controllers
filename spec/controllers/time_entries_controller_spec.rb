@@ -11,16 +11,25 @@ describe TimeEntriesController do
   end
 
   describe '#send_entries' do
-    it 'delivers an email' do
-      time_entry = TimeEntry.create!(actual_start_time: Time.current, actual_end_time: Time.current, task: task, user: user)
-      post :send_invoice
+    let!(:time_entry) do
+      TimeEntry.create!(actual_start_time: Time.current, actual_end_time: Time.current, task: task, user: user)
+    end
 
+    it 'delivers an email' do
+      post :send_entries
       last_email = ActionMailer::Base.deliveries.last
       expect(last_email).to have_content time_entry.description
     end
 
-    it 'flashes a success message'
-    it 'redirects to root path'
+    it 'flashes a success message' do
+      post :send_entries
+      expect(flash[:success]).to eq("Time Entries were successfully sent to you.")
+    end
+
+    it 'redirects to root path' do
+      post :send_entries
+      expect(response).to redirect_to(root_path)
+    end
 
     context 'start date is present'
       context 'end date is present'
