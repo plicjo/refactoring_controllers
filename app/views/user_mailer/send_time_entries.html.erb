@@ -1,0 +1,6 @@
+<p>A Summary of Your Time Entries</p>
+<ul>
+  <% @time_entries.each do |time_entry| %>
+    <li>Time Entries: <%= time_entry.description %>, Start Time: <%= time_entry.actual_start_time %>, End Time: <%= time_entry.actual_end_time %></li>
+</ul>
+<p>Thank you!</p>
