@@ -58,17 +58,56 @@ describe TimeEntriesController do
           expect(last_email).to have_content tomorrow_time_entry.description
         end
       end
+
+      context 'end date is not present' do
+        before do
+          query_params.merge!(end_date: nil)
+        end
+
+        it 'sends entries between start date and today' do
+          post :send_entries, query_params
+          last_email = ActionMailer::Base.deliveries.last
+          expect(last_email).to have_content time_entry.description
+          expect(last_email).to have_content yesterday_time_entry.description
+          # The tomorrow time entry is not in the query range
+          expect(last_email).not_to have_content tomorrow_time_entry.description
+        end
+      end
     end
 
+    context 'start date is not present' do
+      let(:query_params) do
+        { start_date: nil }
+      end
+      context 'end date is present' do
+        before do
+          query_params.merge!(end_date: tomorrow)
+        end
 
-      context 'end date is not present'
-        it 'sends entries between start date and today'
+        it 'sends entries between today and end date' do
+          post :send_entries, query_params
+          last_email = ActionMailer::Base.deliveries.last
+          expect(last_email).to have_content time_entry.description
+          # The yesterday time entry is not in the query range
+          expect(last_email).not_to have_content yesterday_time_entry.description
+          expect(last_email).to have_content tomorrow_time_entry.description
+        end
+      end
 
-    context 'start date is not present'
-      context 'end date is present'
-        it 'sends entries between today and end date'
+      context 'end date is not present' do
+        before do
+          query_params.merge!(end_date: nil)
+        end
 
-      context 'end date is not present'
-        it 'sends entries only from today'
+        it 'sends entries only from today' do
+          post :send_entries, query_params
+          last_email = ActionMailer::Base.deliveries.last
+          expect(last_email).to have_content time_entry.description
+          # Both the tomorrow and yesterday time entries are not in the query range
+          expect(last_email).not_to have_content yesterday_time_entry.description
+          expect(last_email).not_to have_content tomorrow_time_entry.description
+        end
+      end
+    end
   end
 end
