@@ -11,8 +11,16 @@ describe TimeEntriesController do
   end
 
   describe '#send_entries' do
+    let(:yesterday) { Time.current - 1.day }
+    let(:tomorrow) { Time.current + 1.day }
     let!(:time_entry) do
       TimeEntry.create!(actual_start_time: Time.current, actual_end_time: Time.current, task: task, user: user)
+    end
+    let!(:yesterday_time_entry) do
+      TimeEntry.create!(actual_start_time: yesterday, actual_end_time: Time.current, task: task, user: user, description: 'Time Entry From Yesterday')
+    end
+    let!(:tomorrow_time_entry) do
+      TimeEntry.create!(actual_start_time: tomorrow, actual_end_time: tomorrow + 1.day, task: task, user: user, description: 'Time Entry From Tomorrow')
     end
 
     it 'delivers an email' do
@@ -31,9 +39,27 @@ describe TimeEntriesController do
       expect(response).to redirect_to(root_path)
     end
 
-    context 'start date is present'
-      context 'end date is present'
-        it 'sends entries between start date and end date'
+
+    context 'start date is present' do
+      let(:query_params) do
+        { start_date: yesterday }
+      end
+
+      context 'end date is present' do
+        before do
+          query_params.merge!(end_date: tomorrow)
+        end
+
+        it 'sends time entries between start date and end date' do
+          post :send_entries, query_params
+          last_email = ActionMailer::Base.deliveries.last
+          expect(last_email).to have_content time_entry.description
+          expect(last_email).to have_content yesterday_time_entry.description
+          expect(last_email).to have_content tomorrow_time_entry.description
+        end
+      end
+    end
+
 
       context 'end date is not present'
         it 'sends entries between start date and today'
